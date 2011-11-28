@@ -85,7 +85,7 @@ module CheddargetterClientRails
     end
     
     def update_subscription
-      if !new_record?
+      if !new_record? && !skip_cheddargetter
         subscription.customerCode = customer_code_column_value if subscription.customerCode.blank? and customer_code_column_value.present?
         if shared_attributes_have_changed? || subscription.fields_present?
           subscription.update
