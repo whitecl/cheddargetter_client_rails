@@ -113,88 +113,88 @@ The user save will take care of saving the subscription to CheddarGetter.
 In order to save through the user param it is important to nest the subscription params
 in the user params with fields for.  This is an example of how to set up the form properly.
 
-	<%= form_for(@user) do |f| %>
-	  <%= @user.errors.full_messages.each do |message|%>
-			<%= message %>
-		<% end %>
-	  <% if @user.errors.any? %>
-	    <div id="error_explanation">
-	      <h2><%= pluralize(@user.errors.count, "error") %> prohibited this user from being saved:</h2>
+  <%= form_for(@user) do |f| %>
+    <%= @user.errors.full_messages.each do |message|%>
+      <%= message %>
+    <% end %>
+    <% if @user.errors.any? %>
+      <div id="error_explanation">
+        <h2><%= pluralize(@user.errors.count, "error") %> prohibited this user from being saved:</h2>
 
-	      <ul>
-	      <% @user.errors.full_messages.each do |msg| %>
-	        <li><%= msg %></li>
-	      <% end %>
-	      </ul>
-	    </div>
-	  <% end %>
+        <ul>
+        <% @user.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+        </ul>
+      </div>
+    <% end %>
 
-	  <div class="field">
-	    <%= f.label :email %><br />
-	    <%= f.text_field :email %>
-	  </div>
-	  <div class="field">
-	    <%= f.label :first_name %><br />
-	    <%= f.text_field :first_name %>
-	  </div>
-	  <div class="field">
-	    <%= f.label :last_name %><br />
-	    <%= f.text_field :last_name %>
-	  </div>
-	  <div class="field">
-	    <%= f.label :plan_code, "User Plan" %><br />
-	    <%= f.select :plan_code, User::Plans #This is a collection of my plans, ie, [['Free Plan', 'FREE_PLAN'], ['Paid Plan'], ['PAID_PLAN']].  You will need to use your own plans here.
-	     %> 
-	  </div>
+    <div class="field">
+      <%= f.label :email %><br />
+      <%= f.text_field :email %>
+    </div>
+    <div class="field">
+      <%= f.label :first_name %><br />
+      <%= f.text_field :first_name %>
+    </div>
+    <div class="field">
+      <%= f.label :last_name %><br />
+      <%= f.text_field :last_name %>
+    </div>
+    <div class="field">
+      <%= f.label :plan_code, "User Plan" %><br />
+      <%= f.select :plan_code, User::Plans #This is a collection of my plans, ie, [['Free Plan', 'FREE_PLAN'], ['Paid Plan'], ['PAID_PLAN']].  You will need to use your own plans here.
+       %> 
+    </div>
 
-		The following fields are only required if selecting a paid plan.
-		<%= fields_for(:'user[subscription]') do |s| %> #THIS IS THE TRICKY WAY TO NEST THE SUBSCRIPTION PROPERLY.
-			<dl>
-	      <dt>First Name:</dt>
-	      <dd>
-	              <%= s.text_field :ccFirstName,:autocomplete => "off" %>
-	      </dd>
+    The following fields are only required if selecting a paid plan.
+    <%= fields_for(:'user[subscription]') do |s| %> #THIS IS THE TRICKY WAY TO NEST THE SUBSCRIPTION PROPERLY.
+      <dl>
+        <dt>First Name:</dt>
+        <dd>
+                <%= s.text_field :ccFirstName,:autocomplete => "off" %>
+        </dd>
 
-	      <dt>Last Name:</dt>
-	      <dd>
-	              <%= s.text_field :ccLastName, :autocomplete => "off" %>
-	      </dd>
+        <dt>Last Name:</dt>
+        <dd>
+                <%= s.text_field :ccLastName, :autocomplete => "off" %>
+        </dd>
 
-	      <dt>Card Number:</dt>
-	      <dd>
-	              <%= s.text_field :ccNumber,:autocomplete => "off" %>
-	      </dd>
-	      <dt>Expiration Date:</dt>
-	      <dd>
-	              <%= s.text_field :ccExpiration, :autocomplete => 'off' %>
-	      </dd>
-	      <dt>Address:</dt>
-	      <dd>
-	              <%= s.text_field :ccAddress, :autocomplete => 'off' %>
-	      </dd>
-	      <dt>City:</dt>
-	      <dd>
-	              <%= s.text_field :ccCity, :autocomplete => 'off' %>
-	      </dd>
-	      <dt>State:</dt>
-	      <dd>
-	              <%= s.text_field :ccState, :autocomplete => 'off' %>
-	      </dd>
-	      <dt>Zip Code:</dt>
-	      <dd>
-	              <%= s.text_field :zip, :autocomplete => 'off' %>
-	      </dd>
-	      <dt>Country:</dt>
-	      <dd>
-	              <%= s.text_field :ccCountry, :autocomplete => 'off' %>
-	      </dd>
-			</dl>
-		<% end %>
-	
-		<div class="actions">
-	    <%= f.submit %>
-	  </div>
-	<% end %>
+        <dt>Card Number:</dt>
+        <dd>
+                <%= s.text_field :ccNumber,:autocomplete => "off" %>
+        </dd>
+        <dt>Expiration Date:</dt>
+        <dd>
+                <%= s.text_field :ccExpiration, :autocomplete => 'off' %>
+        </dd>
+        <dt>Address:</dt>
+        <dd>
+                <%= s.text_field :ccAddress, :autocomplete => 'off' %>
+        </dd>
+        <dt>City:</dt>
+        <dd>
+                <%= s.text_field :ccCity, :autocomplete => 'off' %>
+        </dd>
+        <dt>State:</dt>
+        <dd>
+                <%= s.text_field :ccState, :autocomplete => 'off' %>
+        </dd>
+        <dt>Zip Code:</dt>
+        <dd>
+                <%= s.text_field :zip, :autocomplete => 'off' %>
+        </dd>
+        <dt>Country:</dt>
+        <dd>
+                <%= s.text_field :ccCountry, :autocomplete => 'off' %>
+        </dd>
+      </dl>
+    <% end %>
+  
+    <div class="actions">
+      <%= f.submit %>
+    </div>
+  <% end %>
 	
 You'll want to user the current_subscription method to get a subscription object with current data.
 CheddarGetter only stores the last 4 of the credit card. This data is gotten by calling ccLastFour
