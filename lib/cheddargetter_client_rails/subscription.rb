@@ -31,6 +31,8 @@ module CheddargetterClientRails
                   :ccFirstName,
                   :ccLastName,
                   :ccExpiration,
+                  :credit_card_expiration_month,
+                  :credit_card_expiration_year,
                   :ccNumber,
                   :ccLastFour,
                   :ccCountry,
@@ -39,13 +41,18 @@ module CheddargetterClientRails
                   :ccState,
                   :customerCode,
                   :email,
-                  :zip
+                  :zip,
+                  :account_valid
 
     validates_presence_of :firstName,
                           :lastName,
                           :email,
-                          :planCode
+                          :planCode,
+                          :credit_card_expiration_month,
+                          :credit_card_expiration_year
                           #:customerCode, generally we call valid before unique identifier is called
+
+    validate :formulate_ccExpiration
 
     validates_presence_of :ccNumber,
                           :ccExpiration,
@@ -87,6 +94,7 @@ module CheddargetterClientRails
   
     def self.get(customer_code)
       response = CGClient.get_customer(:code => customer_code)
+      p 'Retrieving customer data from CheddarGetter'
 
       if response.errors.blank?
         build_from_response(response)
@@ -108,7 +116,10 @@ module CheddargetterClientRails
           :planCode     => customer_plan[:code],
           :zip          => customer_subscription[:ccZip],
           :ccExpiration => customer_subscription[:ccExpirationDate],
-          :customerCode => response.customer[:code]        
+          :credit_card_expiration_month => customer_subscription[:ccExpirationDate].strftime("%m"),
+          :credit_card_expiration_year => customer_subscription[:ccExpirationDate].year.to_s,
+          :customerCode => response.customer[:code],
+          :account_valid => !response.customer_canceled?
         )
       end
     end
@@ -150,9 +161,9 @@ module CheddargetterClientRails
       #this returns cheddargetter errors.
       #hopefully most errors are handled before this in the valid? calls
       #which return prettier errors, but inevitably some will not be caught.
-      if response.try(:errors).try(:any?)
-        response.errors.each do |error|
-          errors.add(:base, error[:text])
+      if response.clean_response[:errors].count > 0
+        response.clean_response[:errors].each do |error|
+          self.errors.add(:base, error[:text])
         end
       
         return false
@@ -189,6 +200,13 @@ module CheddargetterClientRails
       add_errors_or_return_valid_response(response)    
     end
     
+    def cancel
+      raise "Invalid customer code" if customerCode.blank?
+      response = CGClient.cancel_subscription({ :code => customerCode })
+    
+      add_errors_or_return_valid_response(response)
+    end
+
     def instance_variables_hash
       {
         :customerCode => customerCode, 
@@ -212,5 +230,19 @@ module CheddargetterClientRails
         val if val.present?
       end.compact.present?
     end
+
+    def displayCCNumber
+      '************' + ccLastFour if ccLastFour
+    end
+
+    def formulate_ccExpiration
+      if credit_card_expiration_month.present? && credit_card_expiration_year.present?
+        self.ccExpiration = credit_card_expiration_month + '/' + credit_card_expiration_year
+        true
+      else
+        false
+      end
+    end
+
   end
 end

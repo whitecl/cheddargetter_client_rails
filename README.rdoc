@@ -22,7 +22,10 @@ It can be very simple if you go with the default columns, ie:
  :email        => :email,
  :firstName    => :first_name,
  :lastName     => :last_name,
- :planCode     => :plan_code
+ :planCode     => :plan_code,
+ :should_have_subscription => :should_have_subscription
+
+:should_have subscription is a boolean field that will prevent creation of a cheddargetter account if set to false. You can make this false by default in applications in which not all users should have cheddargetter subscriptions. (see sample_migration.txt)
 
 Then the declaration in the model is simply:
 

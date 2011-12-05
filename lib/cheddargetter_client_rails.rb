@@ -19,17 +19,25 @@ module CheddargetterClientRails
     end
     
     def validate_subscription
-       supplement_subscription_fields
-       
-       if !skip_cheddargetter && new_record? && !subscription.valid?
-         errors.add(:subscription, 'problem')
-       end
+      # For any account that shouldn't have a subscription, having nothing is always valid
+      return true if skip_cheddargetter
+
+      # This is for validation when a user already has a subscription but there is only changes to the User object.
+      return true unless subscription.is_a?(ActiveSupport::HashWithIndifferentAccess) || subscription.fields_present?
+
+      supplement_subscription_fields
+
+      if !subscription.valid?
+        errors.add(:subscription, 'problem')
+      end
     end
     
     def supplement_subscription_fields
       if subscription.is_a?(ActiveSupport::HashWithIndifferentAccess)
         self.subscription = CheddargetterClientRails::Subscription.new(subscription)
       end
+
+      throw self.subscription unless self.subscription.is_a? CheddargetterClientRails::Subscription
 
       self.class.shared_columns.each do |subscription_column, user_attribute|
         if(subscription_column == :planCode && user_attribute.is_a?(String)) #user can specify planCode as a string
@@ -43,7 +51,13 @@ module CheddargetterClientRails
     def create_subscription
       raise ArgumentError, 'Customer code is not set on record.' if !customer_code_column_value && !subscription.customerCode
       subscription.customerCode = customer_code_column_value if !subscription.customerCode
-      subscription.create unless skip_cheddargetter
+      unless skip_cheddargetter || !self.should_have_subscription
+        subscription.create
+        if subscription.errors.any?
+          raise ActiveRecord::Rollback
+          return false
+        end
+      end
     end
         
     def current_subscription
@@ -85,7 +99,11 @@ module CheddargetterClientRails
     end
     
     def update_subscription
-      if !new_record? && !skip_cheddargetter
+      return if skip_cheddargetter || !self.should_have_subscription
+
+      if current_subscription == nil
+        create_subscription
+      elsif !new_record?
         subscription.customerCode = customer_code_column_value if subscription.customerCode.blank? and customer_code_column_value.present?
         if shared_attributes_have_changed? || subscription.fields_present?
           subscription.update
@@ -100,6 +118,13 @@ module CheddargetterClientRails
     end
   end
   
+  def determine_skip_cheddargetter
+    # false is invalid, must stay nil
+    if !self.should_have_subscription
+      self.skip_cheddargetter = true
+    end
+  end
+
   module ClassMethods
     def has_subscription(args = {})
       self.customer_code_column = args.delete(:customerCode) || :id
@@ -119,10 +144,11 @@ module CheddargetterClientRails
       
       attr_accessor :skip_cheddargetter
       
+      before_validation :determine_skip_cheddargetter
       validate        :validate_subscription
       after_create    :create_subscription
       before_destroy  :destroy_subscription
-      after_save      :update_subscription            
+      after_save      :update_subscription
     end
 
     def responds_to_customer_code_column?

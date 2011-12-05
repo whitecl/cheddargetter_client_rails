@@ -1,0 +1,6 @@
+class AddPlanCodeToUser < ActiveRecord::Migration
+  def change
+    add_column :users, :plan_code, :string
+    add_column :users, :should_have_subscription, :boolean, default: false
+  end
+end
